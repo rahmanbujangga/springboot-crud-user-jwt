@@ -3,9 +3,11 @@ package com.bujangga.springdemo.controller;
 import com.bujangga.springdemo.service.UserService;
 import com.bujangga.springdemo.shared.dto.UserDto;
 import com.bujangga.springdemo.ui.model.request.UserDetailsRequestModel;
+import com.bujangga.springdemo.ui.model.response.ErrorMessages;
 import com.bujangga.springdemo.ui.model.response.UserRest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,17 +22,22 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
-    public String getUser(){
-        return "Get user was called";
+    @GetMapping(path = "/{id}", produces = {MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public UserRest getUser(@PathVariable String id) {
+        UserRest returnValue = new UserRest();
+        UserDto userDto = userService.getUserByUserId(id);
+        BeanUtils.copyProperties(userDto, returnValue);
+        return returnValue;
+
     }
 
-    @PostMapping
-    public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails){
+    @PostMapping(consumes = {MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) throws Exception {
         UserRest returnValue = new UserRest();
-
+        if (userDetails.getFirstName().isEmpty()) throw new Exception(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
         UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails,userDto);
+        BeanUtils.copyProperties(userDetails, userDto);
 
         UserDto createdUser = userService.createUser(userDto);
         BeanUtils.copyProperties(createdUser, returnValue);
@@ -38,12 +45,12 @@ public class UserController {
     }
 
     @PutMapping
-    public String updateUser(){
+    public String updateUser() {
         return "Update user was called";
     }
 
     @DeleteMapping
-    public String deleteUser(){
+    public String deleteUser() {
         return "Delete user was called";
     }
 }
